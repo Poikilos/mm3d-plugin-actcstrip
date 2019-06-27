@@ -4,6 +4,10 @@
 #include "log.h"
 #include <list>
 
+#include <math.h>
+#include <stdlib.h>
+#include <ctype.h>
+
 extern "C" {
 #include "actc/tc.h"
 };
@@ -600,7 +604,7 @@ extern "C" bool plugin_uninit()
 
 extern "C" const char * plugin_version()
 {
-   return "0.9.0";
+   return "1.0.0";
 }
 
 extern "C" const char * plugin_desc()
