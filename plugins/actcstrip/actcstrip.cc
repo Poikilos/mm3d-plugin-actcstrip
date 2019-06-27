@@ -2,6 +2,9 @@
 
 #include "model.h"
 #include "log.h"
+#include "pluginapi.h"
+#include "version.h"
+
 #include <list>
 
 #include <math.h>
@@ -589,7 +592,7 @@ static TriPrim * _newActcFunc()
 // Plugin functions
 //------------------------------------------------------------------
 
-extern "C" bool plugin_init()
+PLUGIN_API bool plugin_init()
 {
    log_debug( "ACTC Triangle Stripping plugin initialized\n" );
    TriPrim::registerTriPrimFunction( _newActcFunc );
@@ -597,17 +600,22 @@ extern "C" bool plugin_init()
 }
 
 // We have no cleanup to do
-extern "C" bool plugin_uninit()
+PLUGIN_API bool plugin_uninit()
 {
    return true;
 }
 
-extern "C" const char * plugin_version()
+PLUGIN_API const char * plugin_version()
 {
-   return "1.0.0";
+   return "1.1.1";
 }
 
-extern "C" const char * plugin_desc()
+PLUGIN_API const char * plugin_mm3d_version()
+{
+   return VERSION_STRING;
+}
+
+PLUGIN_API const char * plugin_desc()
 {
    return "ACTC triangle stripping";
 }

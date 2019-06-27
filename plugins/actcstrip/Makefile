@@ -2,7 +2,7 @@ PLUGINS =  \
 			  actcstrip.so \
 
 LFLAGS = -O2 -Wall 
-CFLAGS = -O2 -Wall -DMM3D_EDIT -I../../src -I../../src/libmm3d -DPLUGIN
+CFLAGS = -O2 -Wall -DMM3D_EDIT -I../.. -I../../src -I../../src/libmm3d -DPLUGIN
 
 all: actc_lib ${PLUGINS}
 
