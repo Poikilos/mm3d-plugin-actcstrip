@@ -1,0 +1,27 @@
+CXX=mingw32-g++
+
+# DEBUG=-DDEBUG
+CFLAGS=-g $(DEBUG) -Iactc -DMM3D_EDIT -I../.. -I../../src -I../../src/libmm3d -DPLUGIN
+
+# FIXME is this needed?
+LDFLAGS=-lm
+
+# for win32 DLL
+DLLFLAGS=-Wl,-enable-stdcall-fixup -Wl,-enable-auto-import -Wl,-enable-runtime-pseudo-reloc -mthreads -Wl,-s -Wl,-subsystem,windows -shared -Wl,--export-all-symbols
+
+OBJECTS=actcstrip.o actc/tc.o
+
+DLLNAME=actcstrip.dll
+
+all: $(DLLNAME)
+
+%.o: %.cc
+	g++ ${CFLAGS} -c $<
+
+$(DLLNAME): $(OBJECTS)
+	$(CXX) $(DLLFLAGS) -Wl,--out-implib,libplugin.a -Wall -shared -o $(DLLNAME) $(OBJECTS)
+
+clean:
+	rm -rf $(DLLNAME) $(OBJECTS)
+
+
