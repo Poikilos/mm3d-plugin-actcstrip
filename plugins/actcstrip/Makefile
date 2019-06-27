@@ -13,7 +13,7 @@ actc_lib:
 	g++ ${CFLAGS} -c $<
 
 %.so: %.o
-	g++ -Wall -shared -o $*.so $< actc/libactc.a
+	g++ -g -Wall -shared -o $*.so $< actc/libactc.a
 
 clean:
 	make -C actc clean

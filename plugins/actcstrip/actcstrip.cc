@@ -106,7 +106,6 @@ static void _getVertexTexCoords( TriElementList & l, unsigned v, float & s, floa
    t = 0.0f;
 }
 
-/*
 static int _getMappedVertex( std::vector<int> & vectormap, int v )
 {
    unsigned count = vectormap.size();
@@ -122,7 +121,6 @@ static int _getMappedVertex( std::vector<int> & vectormap, int v )
 
    return count;
 }
-*/
 
 ActcTriPrim::ActcTriPrim()
    : m_it( m_primitives.end() )
@@ -215,8 +213,22 @@ bool ActcTriPrim::findPrimitives( Model * model, bool grouped )
          l[t].used = false;
       }
 
+      // Mark triangles that have two or more identical vertices as "used"
+
+      for ( t = 0; t < tricount; t++ )
+      {
+         if ( l[t].v[0] == l[t].v[1]
+           || l[t].v[0] == l[t].v[2]
+           || l[t].v[1] == l[t].v[2] )
+         {
+            log_warning( "model has invisible triangle (two or more identical vertices)\n" );
+            l[t].used = true;
+         }
+      }
+
       // Find primitives for ungrouped
       {
+         log_debug( "finding ungrouped triangles\n" );
          vectormap.clear();
 
          actcBeginInput( tc );
@@ -225,23 +237,25 @@ bool ActcTriPrim::findPrimitives( Model * model, bool grouped )
             if ( l[t].textureId == -1 )
             {
                l[t].used = true;
-               /*
                uint v1 = _getMappedVertex( vectormap, model->getTriangleVertex( t, 0 ) );
                uint v2 = _getMappedVertex( vectormap, model->getTriangleVertex( t, 1 ) );
                uint v3 = _getMappedVertex( vectormap, model->getTriangleVertex( t, 2 ) );
-               */
+               /*
                uint v1 = model->getTriangleVertex( t, 0 );
                uint v2 = model->getTriangleVertex( t, 1 );
                uint v3 = model->getTriangleVertex( t, 2 );
+               */
 
                log_debug( "vertices %d %d %d\n", v1, v2, v3 );
                actcAddTriangle( tc, v1, v2, v3 );
             }
          }
          actcEndInput( tc );
+         log_debug( "done finding ungrouped triangles\n" );
 
          if ( vectormap.size() )
          {
+            log_debug( "finding primitives for ungrouped triangles\n" );
             actcBeginOutput( tc );
             {
                uint v1 = 0;
@@ -258,10 +272,12 @@ bool ActcTriPrim::findPrimitives( Model * model, bool grouped )
 
                   if ( type == ACTC_PRIM_FAN )
                   {
+                     log_debug( "got triangle fan\n" );
                      tpt = TRI_PRIM_FAN;
                   }
                   else if ( type == ACTC_PRIM_STRIP )
                   {
+                     log_debug( "got triangle strip\n" );
                      tpt = TRI_PRIM_STRIP;
                   }
                   else
@@ -274,22 +290,22 @@ bool ActcTriPrim::findPrimitives( Model * model, bool grouped )
                      PrimitiveT prim;
                      prim.primType = tpt;
 
-                     //tv.vert = vectormap[ v1 ];
-                     tv.vert = v1;
+                     tv.vert = vectormap[ v1 ];
+                     //tv.vert = v1;
                      prim.tvl.push_back( tv );
 
                      log_debug( "out vertex %d = %d\n", v1, vectormap[ v1 ] );
 
-                     //tv.vert = vectormap[ v2 ];
-                     tv.vert = v2;
+                     tv.vert = vectormap[ v2 ];
+                     //tv.vert = v2;
                      prim.tvl.push_back( tv );
 
                      log_debug( "out vertex %d = %d\n", v2, vectormap[ v2 ] );
 
                      while ( actcGetNextVert( tc, &v3 ) != ACTC_PRIM_COMPLETE )
                      {
-                        //tv.vert = vectormap[ v3 ];
-                        tv.vert = v3;
+                        tv.vert = vectormap[ v3 ];
+                        //tv.vert = v3;
                         log_debug( "out vertex %d = %d\n", v3, vectormap[ v3 ] );
                         prim.tvl.push_back( tv );
                      }
@@ -299,13 +315,16 @@ bool ActcTriPrim::findPrimitives( Model * model, bool grouped )
                }
             }
             actcEndOutput( tc );
+            log_debug( "done finding primitives for ungrouped triangles\n" );
          }
       }
 
       // Find primitives for grouped
       int first = 0;
+      log_debug( "finding grouped triangles with shared vertex coordinates\n" );
       while ( (first = _haveUnused( l )) != -1 )
       {
+
          vectormap.clear();
          l[first].used = true;
 
@@ -338,25 +357,27 @@ bool ActcTriPrim::findPrimitives( Model * model, bool grouped )
                }
             }
          }
+         log_debug( "done finding grouped triangles with shared vertex coordinates\n" );
 
          // Found a group, get primitives
          log_debug( "group size is %d\n", grp.size() );
          if ( grp.size() > 1 )
          {
+            log_debug( "finding primitives for grouped triangles with shared vertex coordinates\n" );
             actcMakeEmpty( tc );
             actcBeginInput( tc );
             unsigned grpcount = grp.size();
             for ( unsigned g = 0; g < grpcount; g++ )
             {
                unsigned t = grp[g].triId;
-               /*
                uint v1 = _getMappedVertex( vectormap, model->getTriangleVertex( t, 0 ) );
                uint v2 = _getMappedVertex( vectormap, model->getTriangleVertex( t, 1 ) );
                uint v3 = _getMappedVertex( vectormap, model->getTriangleVertex( t, 2 ) );
-               */
+               /*
                uint v1 = model->getTriangleVertex( t, 0 );
                uint v2 = model->getTriangleVertex( t, 1 );
                uint v3 = model->getTriangleVertex( t, 2 );
+               */
 
                actcAddTriangle( tc, v1, v2, v3 );
             }
@@ -378,10 +399,12 @@ bool ActcTriPrim::findPrimitives( Model * model, bool grouped )
 
                   if ( type == ACTC_PRIM_FAN )
                   {
+                     log_debug( "got a triangle fan\n" );
                      tpt = TRI_PRIM_FAN;
                   }
                   else if ( type == ACTC_PRIM_STRIP )
                   {
+                     log_debug( "got a triangle strip\n" );
                      tpt = TRI_PRIM_STRIP;
                   }
                   else
@@ -394,22 +417,29 @@ bool ActcTriPrim::findPrimitives( Model * model, bool grouped )
                      PrimitiveT prim;
                      prim.primType = tpt;
 
-                     //tv.vert = vectormap[ v1 ];
-                     tv.vert = v1;
+                     tv.vert = vectormap[ v1 ];
+                     //tv.vert = v1;
                      _getVertexTexCoords( grp, tv.vert, tv.s, tv.t );
                      prim.tvl.push_back( tv );
 
-                     //tv.vert = vectormap[ v2 ];
-                     tv.vert = v2;
+                     log_debug( "out vertex %d = %d\n", v1, vectormap[ v1 ] );
+
+                     tv.vert = vectormap[ v2 ];
+                     //tv.vert = v2;
                      _getVertexTexCoords( grp, tv.vert, tv.s, tv.t );
                      prim.tvl.push_back( tv );
+
+                     log_debug( "out vertex %d = %d\n", v2, vectormap[ v2 ] );
 
                      while ( actcGetNextVert( tc, &v3 ) != ACTC_PRIM_COMPLETE )
                      {
-                        //tv.vert = vectormap[ v3 ];
-                        tv.vert = v3;
+                        tv.vert = vectormap[ v3 ];
+                        //tv.vert = v3;
+
                         _getVertexTexCoords( grp, tv.vert, tv.s, tv.t );
                         prim.tvl.push_back( tv );
+
+                        log_debug( "out vertex %d = %d\n", v3, vectormap[ v3 ] );
                      }
 
                      m_primitives.push_back( prim );
@@ -417,9 +447,11 @@ bool ActcTriPrim::findPrimitives( Model * model, bool grouped )
                }
             }
             actcEndOutput( tc );
+            log_debug( "done finding primitives for grouped triangles with shared vertex coordinates\n" );
          }
          else
          {
+            log_debug( "got lone triangle for triangle fan\n" );
             PrimitiveT prim;
             prim.primType = TRI_PRIM_FAN;
             TriangleVertexT tv;
@@ -445,6 +477,7 @@ bool ActcTriPrim::findPrimitives( Model * model, bool grouped )
    }
    else
    {
+      log_debug( "finding primitives, grouping ignored\n" );
       actcBeginInput( tc );
       for ( t = 0; t < count; t++ )
       {
@@ -506,8 +539,10 @@ bool ActcTriPrim::findPrimitives( Model * model, bool grouped )
       }
       actcEndOutput( tc );
 
-      actcDelete( tc );
+      log_debug( "done finding primitives\n" );
    }
+
+   actcDelete( tc );
 
    if ( error )
    {
