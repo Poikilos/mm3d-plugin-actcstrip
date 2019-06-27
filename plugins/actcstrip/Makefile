@@ -1,8 +1,8 @@
 PLUGINS =  \
 			  actcstrip.so \
 
-LFLAGS = -g -Wall 
-CFLAGS = -g -Wall -I../../src -DPLUGIN
+LFLAGS = -O2 -Wall 
+CFLAGS = -O2 -Wall -DMM3D_EDIT -I../../src -I../../src/libmm3d -DPLUGIN
 
 all: actc_lib ${PLUGINS}
 
